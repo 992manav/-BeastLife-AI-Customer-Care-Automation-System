@@ -17,10 +17,7 @@
       "name": "BeastBot Chat",
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.4,
-      "position": [
-        -432,
-        704
-      ],
+      "position": [-432, 704],
       "webhookId": "bcc45018-b922-4ae3-bc63-1527fcb20c73"
     },
     {
@@ -29,17 +26,14 @@
         "text": "={{ \"Query: \" + $json.chatInput + \"\\nContext: \" + ($json.context ? JSON.stringify($json.context) : \"none\") + \"\\nIntent: \" + ($json.intent ?? \"unknown\") }}",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "You are BeastBot — the AI Customer Care Automation System for Beastlife.\n\nClassify the query into ONE category:\n1. order_tracking\n2. delivery_delay\n3. refund_request\n4. product_complaint\n5. subscription_issue\n6. payment_failure\n7. general_question\n\nconfidence: 0.0–1.0 (how confident you are)\n\nSet requires_human = true if confidence < 0.5\n\nDECISION LOGIC:\nIf confidence < 0.5 OR requires_human = true:\n→ path = \"C\" (Escalation)\n→ response = \"I understand this is important. Let me escalate to our support team.\"\n\nElse if category == general_question:\n→ path = \"B\" (Knowledge Base - will use RAG)\n→ response = \"Let me find the best answer for you.\"\n\nElse:\n→ path = \"A\" (Auto Resolution - will call API)\n→ response = \"Processing your request...\"\n\nReturn JSON with: category, confidence, requires_human, path, response"
+          "systemMessage": "You are BeastBot, the AI Customer Care Automation System for BeastLife.\n\nTask: classify and route each customer message for support automation.\n\nAllowed categories (choose exactly one):\n1. order_tracking\n2. delivery_delays\n3. refund_requests\n4. product_complaints\n5. subscription_issues\n6. payment_issues\n7. general_questions\n\nOutput requirements:\n- Return JSON only (no markdown, no explanation).\n- confidence must be 0.0 to 1.0.\n- sentiment must be: positive | neutral | negative | critical.\n- urgency must be: low | medium | high | critical.\n\nSet requires_human = true if any of these are true:\n- confidence < 0.65\n- sentiment is critical\n- fraud/legal/police/safety/social media escalation threat appears\n\nRouting policy:\n- Path C: requires_human = true\n- Path B: category == general_questions and requires_human = false\n- Path A: all other categories when requires_human = false\n\nResponse policy:\n- Keep response concise and empathetic.\n- Never invent order/payment details.\n- If key entity is missing (like order_id), ask a single clarifying question.\n\nReturn JSON with fields: category, sentiment, urgency, confidence, requires_human, path, response"
         }
       },
       "id": "8f0474e2-a5a8-4dd5-8ba2-ac43bdbcf93a",
       "name": "BeastBot Classifier",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [
-        880,
-        448
-      ]
+      "position": [880, 448]
     },
     {
       "parameters": {
@@ -47,20 +41,23 @@
           "category": "order_tracking",
           "sentiment": "neutral",
           "urgency": "medium",
-          "confidence": 0.85,
+          "confidence": 0.9,
           "requires_human": false,
+          "entities": {
+            "order_id": "ORD-12345",
+            "payment_id": null,
+            "product_name": null,
+            "amount": null
+          },
           "path": "A",
-          "response": "Your order is currently in transit and will arrive soon."
+          "response": "Please share your order ID and I will fetch the latest tracking update."
         }
       },
       "id": "e191e3c7-6be2-4f73-b20b-e178ed618e4f",
       "name": "Structured Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
-      "position": [
-        1072,
-        672
-      ]
+      "position": [1072, 672]
     },
     {
       "parameters": {
@@ -140,10 +137,7 @@
       "name": "Route by Path",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
-      "position": [
-        1728,
-        736
-      ]
+      "position": [1728, 736]
     },
     {
       "parameters": {
@@ -175,10 +169,7 @@
       "name": "Auto Resolution Response",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        2624,
-        736
-      ]
+      "position": [2624, 736]
     },
     {
       "parameters": {
@@ -210,10 +201,7 @@
       "name": "Knowledge Base Response",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        2176,
-        752
-      ]
+      "position": [2176, 752]
     },
     {
       "parameters": {
@@ -251,10 +239,7 @@
       "name": "Escalation Response",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        2400,
-        944
-      ]
+      "position": [2400, 944]
     },
     {
       "parameters": {
@@ -266,10 +251,7 @@
       "name": "Groq Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [
-        816,
-        672
-      ],
+      "position": [816, 672],
       "credentials": {
         "groqApi": {
           "id": "W7XYh9EYufB34FLk",
@@ -283,10 +265,7 @@
       "name": "Manual Trigger - Generate Dataset",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [
-        -352,
-        144
-      ]
+      "position": [-352, 144]
     },
     {
       "parameters": {
@@ -296,10 +275,7 @@
       "name": "Generate Sample Dataset",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        -128,
-        144
-      ]
+      "position": [-128, 144]
     },
     {
       "parameters": {
@@ -376,10 +352,7 @@
       "name": "Create Data Table",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
-      "position": [
-        96,
-        48
-      ]
+      "position": [96, 48]
     },
     {
       "parameters": {
@@ -405,10 +378,7 @@
       "name": "Batch Complete",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        320,
-        144
-      ]
+      "position": [320, 144]
     },
     {
       "parameters": {
@@ -429,10 +399,7 @@
       "name": "Insert to Data Table",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
-      "position": [
-        320,
-        336
-      ]
+      "position": [320, 336]
     },
     {
       "parameters": {
@@ -443,10 +410,7 @@
       "name": "Batch Insert Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [
-        96,
-        240
-      ]
+      "position": [96, 240]
     },
     {
       "parameters": {
@@ -465,10 +429,7 @@
       "name": "Calculate Statistics",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
-      "position": [
-        544,
-        144
-      ]
+      "position": [544, 144]
     },
     {
       "parameters": {
@@ -495,10 +456,7 @@
       "name": "Aggregate by Category",
       "type": "n8n-nodes-base.summarize",
       "typeVersion": 1.1,
-      "position": [
-        768,
-        0
-      ]
+      "position": [768, 0]
     },
     {
       "parameters": {},
@@ -506,10 +464,7 @@
       "name": "Combine Analytics",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [
-        992,
-        144
-      ]
+      "position": [992, 144]
     },
     {
       "parameters": {
@@ -532,10 +487,7 @@
       "name": "Aggregate by Sentiment",
       "type": "n8n-nodes-base.summarize",
       "typeVersion": 1.1,
-      "position": [
-        768,
-        192
-      ]
+      "position": [768, 192]
     },
     {
       "parameters": {
@@ -579,10 +531,7 @@
       "name": "Format Final Report",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        1216,
-        144
-      ]
+      "position": [1216, 144]
     },
     {
       "parameters": {
@@ -598,10 +547,7 @@
       "name": "Schedule Daily Report",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
-      "position": [
-        -352,
-        -224
-      ]
+      "position": [-352, -224]
     },
     {
       "parameters": {
@@ -629,10 +575,7 @@
       "name": "Fetch Daily Data",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
-      "position": [
-        -128,
-        -224
-      ]
+      "position": [-128, -224]
     },
     {
       "parameters": {
@@ -660,10 +603,7 @@
       "name": "Filter Escalations",
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.3,
-      "position": [
-        96,
-        -224
-      ]
+      "position": [96, -224]
     },
     {
       "parameters": {
@@ -690,10 +630,7 @@
       "name": "Daily Summary",
       "type": "n8n-nodes-base.summarize",
       "typeVersion": 1.1,
-      "position": [
-        320,
-        -224
-      ]
+      "position": [320, -224]
     },
     {
       "parameters": {
@@ -727,10 +664,7 @@
       "name": "Log Interaction",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
-      "position": [
-        1952,
-        752
-      ]
+      "position": [1952, 752]
     },
     {
       "parameters": {
@@ -742,10 +676,7 @@
       "name": "Dashboard Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [
-        1440,
-        -48
-      ],
+      "position": [1440, -48],
       "webhookId": "2de963db-ee42-4f43-8fa2-95ff9a841efe"
     },
     {
@@ -765,10 +696,7 @@
       "name": "Fetch All Interactions",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
-      "position": [
-        1664,
-        -48
-      ]
+      "position": [1664, -48]
     },
     {
       "parameters": {
@@ -787,10 +715,7 @@
       "name": "Calculate Category Distribution",
       "type": "n8n-nodes-base.summarize",
       "typeVersion": 1.1,
-      "position": [
-        1888,
-        -432
-      ]
+      "position": [1888, -432]
     },
     {
       "parameters": {
@@ -800,10 +725,7 @@
       "name": "Merge All Analytics",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [
-        2112,
-        -96
-      ]
+      "position": [2112, -96]
     },
     {
       "parameters": {
@@ -822,10 +744,7 @@
       "name": "Calculate Total Count",
       "type": "n8n-nodes-base.summarize",
       "typeVersion": 1.1,
-      "position": [
-        1888,
-        -240
-      ]
+      "position": [1888, -240]
     },
     {
       "parameters": {
@@ -844,10 +763,7 @@
       "name": "Calculate Sentiment Distribution",
       "type": "n8n-nodes-base.summarize",
       "typeVersion": 1.1,
-      "position": [
-        1888,
-        -48
-      ]
+      "position": [1888, -48]
     },
     {
       "parameters": {
@@ -874,10 +790,7 @@
       "name": "Calculate Resolution Metrics",
       "type": "n8n-nodes-base.summarize",
       "typeVersion": 1.1,
-      "position": [
-        1888,
-        144
-      ]
+      "position": [1888, 144]
     },
     {
       "parameters": {
@@ -887,10 +800,7 @@
       "name": "Calculate Weekly Trends",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1888,
-        336
-      ]
+      "position": [1888, 336]
     },
     {
       "parameters": {
@@ -900,10 +810,7 @@
       "name": "Build Dashboard Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        2336,
-        -48
-      ]
+      "position": [2336, -48]
     },
     {
       "parameters": {
@@ -913,10 +820,7 @@
       "name": "Generate HTML Dashboard",
       "type": "n8n-nodes-base.html",
       "typeVersion": 1.2,
-      "position": [
-        2560,
-        -48
-      ]
+      "position": [2560, -48]
     },
     {
       "parameters": {
@@ -937,10 +841,7 @@
       "name": "Respond with Dashboard",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [
-        2784,
-        -48
-      ]
+      "position": [2784, -48]
     },
     {
       "parameters": {
@@ -954,10 +855,7 @@
       "name": "Store Context",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [
-        -208,
-        704
-      ]
+      "position": [-208, 704]
     },
     {
       "parameters": {
@@ -971,10 +869,7 @@
       "name": "Retrieve Context",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [
-        16,
-        704
-      ]
+      "position": [16, 704]
     },
     {
       "parameters": {
@@ -982,17 +877,14 @@
         "text": "={{ $json.chatInput }}",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "Extract ALL intents from the customer query. Return a JSON array of intents.\n\nExamples:\n\"Payment failed and order delayed\" → [{\"intent\": \"payment_failure\"}, {\"intent\": \"delivery_delay\"}]\n\"Want refund\" → [{\"intent\": \"refund_request\"}]\n\nCategories: order_tracking, delivery_delay, refund_request, product_complaint, subscription_issue, payment_failure, general_question"
+          "systemMessage": "Extract all intents from the customer query. Return JSON only.\n\nAllowed intent values:\norder_tracking, delivery_delays, refund_requests, product_complaints, subscription_issues, payment_issues, general_questions\n\nRules:\n- Return only valid JSON with key intents.\n- Each intent item should include optional entities object.\n- Do not return explanations or markdown.\n\nExample output:\n{\"intents\": [{\"intent\": \"payment_issues\", \"entities\": {}}, {\"intent\": \"delivery_delays\", \"entities\": {}}]}"
         }
       },
       "id": "ed77d1f6-bb1d-4122-84a1-483966dd8fbb",
       "name": "Extract Intents",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [
-        240,
-        704
-      ]
+      "position": [240, 704]
     },
     {
       "parameters": {
@@ -1000,7 +892,9 @@
           "intents": [
             {
               "intent": "order_tracking",
-              "entities": {}
+              "entities": {
+                "order_id": "ORD-12345"
+              }
             }
           ]
         }
@@ -1009,10 +903,7 @@
       "name": "Intent Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
-      "position": [
-        320,
-        928
-      ]
+      "position": [320, 928]
     },
     {
       "parameters": {
@@ -1024,10 +915,7 @@
       "name": "Split Intents",
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
-      "position": [
-        592,
-        704
-      ]
+      "position": [592, 704]
     },
     {
       "parameters": {
@@ -1037,10 +925,7 @@
       "name": "Check Confidence",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [
-        1280,
-        560
-      ]
+      "position": [1280, 560]
     },
     {
       "parameters": {
@@ -1067,10 +952,7 @@
       "name": "Ask Clarification",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        1504,
-        464
-      ]
+      "position": [1504, 464]
     },
     {
       "parameters": {
@@ -1080,10 +962,7 @@
       "name": "Check Critical Sentiment",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [
-        1504,
-        656
-      ]
+      "position": [1504, 656]
     },
     {
       "parameters": {
@@ -1116,10 +995,7 @@
       "name": "Immediate Escalation",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        1728,
-        544
-      ]
+      "position": [1728, 544]
     },
     {
       "parameters": {
@@ -1142,10 +1018,7 @@
       "name": "Call API With Retry",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [
-        2176,
-        544
-      ],
+      "position": [2176, 544],
       "onError": "continueErrorOutput"
     },
     {
@@ -1156,10 +1029,7 @@
       "name": "Retry Logic",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [
-        2400,
-        464
-      ]
+      "position": [2400, 464]
     },
     {
       "parameters": {
@@ -1169,10 +1039,7 @@
       "name": "Retry API Call",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        2624,
-        544
-      ],
+      "position": [2624, 544],
       "webhookId": "36b4564f-2e3c-498a-adce-665f300b8178"
     },
     {
@@ -1192,10 +1059,7 @@
       "name": "Send Escalation Alert",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.4,
-      "position": [
-        2176,
-        944
-      ],
+      "position": [2176, 944],
       "webhookId": "939a30ff-6575-4827-b336-c7fb2c0cdfdc"
     },
     {
@@ -1241,10 +1105,7 @@
       "name": "Collect Feedback",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        2624,
-        944
-      ],
+      "position": [2624, 944],
       "webhookId": "f09aa5c1-1066-4449-a7b8-7d50cec793aa"
     },
     {
@@ -1270,10 +1131,7 @@
       "name": "Store Feedback",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
-      "position": [
-        2848,
-        944
-      ]
+      "position": [2848, 944]
     },
     {
       "parameters": {
@@ -1292,10 +1150,7 @@
       "name": "Aggregate Intents",
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
-      "position": [
-        944,
-        848
-      ]
+      "position": [944, 848]
     },
     {
       "parameters": {
@@ -1305,10 +1160,7 @@
       "name": "Merge Intent Responses",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1280,
-        848
-      ]
+      "position": [1280, 848]
     },
     {
       "parameters": {
@@ -1318,10 +1170,7 @@
       "name": "Detect Spike",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        656,
-        -224
-      ]
+      "position": [656, -224]
     },
     {
       "parameters": {
@@ -1331,10 +1180,7 @@
       "name": "Filter Spike Alerts",
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.3,
-      "position": [
-        880,
-        -224
-      ]
+      "position": [880, -224]
     },
     {
       "parameters": {
@@ -1351,10 +1197,7 @@
       "name": "Send Spike Alert",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.4,
-      "position": [
-        1104,
-        -224
-      ],
+      "position": [1104, -224],
       "webhookId": "fe109c54-6982-4033-80d9-47e0b20700b1"
     },
     {
@@ -1365,10 +1208,7 @@
       "name": "Chat Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
-      "position": [
-        944,
-        672
-      ]
+      "position": [944, 672]
     }
   ],
   "pinData": {},

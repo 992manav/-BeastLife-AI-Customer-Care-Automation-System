@@ -80,12 +80,12 @@ async def parallel_ai_node(state: Dict[str, Any]) -> Dict[str, Any]:
         """Classify query into categories."""
         categories = [
             "order_tracking",
-            "refund_request",
-            "payment_issue",
-            "general_question",
-            "technical_support",
-            "membership_inquiry",
-            "billing_question",
+            "delivery_delays",
+            "refund_requests",
+            "product_complaints",
+            "subscription_issues",
+            "payment_issues",
+            "general_questions",
             "other"
         ]
         result = await llm_provider.classify(query, categories)
@@ -113,7 +113,17 @@ async def parallel_ai_node(state: Dict[str, Any]) -> Dict[str, Any]:
         )
         
         # Merge results into state
-        state["category"] = classification.get("category", "other")
+        raw_category = classification.get("category", "other")
+        category_aliases = {
+            "delivery_delay": "delivery_delays",
+            "refund_request": "refund_requests",
+            "product_complaint": "product_complaints",
+            "subscription_issue": "subscription_issues",
+            "payment_issue": "payment_issues",
+            "payment_failure": "payment_issues",
+            "general_question": "general_questions",
+        }
+        state["category"] = category_aliases.get(raw_category, raw_category)
         state["confidence"] = classification.get("confidence", 0.0)
         state["entities"] = entities
         state["sentiment"] = sentiment.get("sentiment", "neutral")
@@ -147,10 +157,10 @@ async def decision_node(state: Dict[str, Any]) -> Dict[str, Any]:
     category = state.get("category", "other")
     
     # Routing logic
-    if confidence < 0.5 or sentiment == "critical":
+    if confidence < 0.65 or sentiment == "critical":
         path = "C"  # Escalation
         logger.info("Routing to Path C: Escalation")
-    elif category == "general_question":
+    elif category == "general_questions":
         path = "B"  # RAG-based response
         logger.info("Routing to Path B: RAG-based response")
     else:

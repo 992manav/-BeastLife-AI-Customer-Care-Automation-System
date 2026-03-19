@@ -2,10 +2,41 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 import json
+import re
 from src.core.config import get_settings
 from src.core.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+
+def _safe_parse_json(response_text: str, fallback: Dict[str, Any]) -> Dict[str, Any]:
+    """Parse model output into JSON even when wrapped in markdown/code fences."""
+    try:
+        return json.loads(response_text)
+    except Exception:
+        pass
+
+    if not response_text:
+        return fallback
+
+    # Handle fenced code blocks or extra commentary around JSON.
+    cleaned = response_text.strip()
+    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", cleaned, flags=re.DOTALL)
+    if fenced:
+        try:
+            return json.loads(fenced.group(1))
+        except Exception:
+            pass
+
+    # Fallback to first JSON object found in response.
+    obj_match = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
+    if obj_match:
+        try:
+            return json.loads(obj_match.group(0))
+        except Exception:
+            pass
+
+    return fallback
 
 class LLMProvider(ABC):
     """Abstract base class for LLM providers."""
@@ -61,35 +92,56 @@ class GeminiProvider(LLMProvider):
     
     async def classify(self, text: str, categories: list) -> Dict[str, Any]:
         """Classify text using Gemini."""
-        prompt = f"""Classify the following text into one of these categories: {', '.join(categories)}
-        
-Text: {text}
+        prompt = f"""You are a customer-care intent classifier for BeastLife.
 
-Respond in JSON format:
+Choose exactly one category from this list:
+{', '.join(categories)}
+
+Input text:
+{text}
+
+Rules:
+- Return only valid JSON.
+- Do not include markdown, backticks, or explanation.
+- confidence must be a float from 0.0 to 1.0.
+- If uncertain, choose the closest category and reduce confidence.
+
+Required JSON schema:
 {{
-    "category": "chosen category",
-    "confidence": 0.0-1.0
+    "category": "one category from the provided list",
+    "confidence": 0.0,
+    "intents": []
 }}"""
         
         try:
             response_text = await self.generate(prompt, temperature=0.2)
-            # Parse JSON from response
-            response_dict = json.loads(response_text)
+            response_dict = _safe_parse_json(
+                response_text,
+                {"category": "unknown", "confidence": 0.0, "intents": []}
+            )
             return response_dict
         except Exception as e:
             logger.error(f"Error classifying text with Gemini: {e}")
-            return {"category": "unknown", "confidence": 0.0}
+            return {"category": "unknown", "confidence": 0.0, "intents": []}
     
     async def extract_entities(self, text: str) -> Dict[str, Any]:
         """Extract entities using Gemini."""
-        prompt = f"""Extract named entities and key information from the following text:
+        prompt = f"""Extract customer-support entities from the text below.
 
-Text: {text}
+Text:
+{text}
 
-Respond in JSON format with entity types and values:
+Rules:
+- Return only valid JSON.
+- If a field is not present, return an empty list for that field.
+- Keep original values without rewriting.
+
+Required JSON schema:
 {{
     "order_id": [],
+    "payment_id": [],
     "product_name": [],
+    "amount": [],
     "customer_issue": [],
     "phone": [],
     "email": []
@@ -97,35 +149,72 @@ Respond in JSON format with entity types and values:
         
         try:
             response_text = await self.generate(prompt, temperature=0.1)
-            response_dict = json.loads(response_text)
+            response_dict = _safe_parse_json(
+                response_text,
+                {
+                    "order_id": [],
+                    "payment_id": [],
+                    "product_name": [],
+                    "amount": [],
+                    "customer_issue": [],
+                    "phone": [],
+                    "email": [],
+                }
+            )
             return response_dict
         except Exception as e:
             logger.error(f"Error extracting entities with Gemini: {e}")
-            return {}
+            return {
+                "order_id": [],
+                "payment_id": [],
+                "product_name": [],
+                "amount": [],
+                "customer_issue": [],
+                "phone": [],
+                "email": [],
+            }
     
     async def analyze_sentiment(self, text: str) -> Dict[str, Any]:
         """Analyze sentiment using Gemini."""
-        prompt = f"""Analyze the sentiment of the following text:
+        prompt = f"""Analyze customer sentiment and urgency from this text.
 
-Text: {text}
+Text:
+{text}
 
-Respond in JSON format:
+Rules:
+- Return only valid JSON.
+- sentiment must be one of: positive, negative, neutral, critical.
+- confidence must be 0.0 to 1.0.
+- score must be -1.0 to 1.0.
+- urgency must be one of: low, medium, high, critical.
+
+Required JSON schema:
 {{
-    "sentiment": "positive|negative|neutral|critical",
-    "confidence": 0.0-1.0,
-    "score": -1.0 to 1.0
+    "sentiment": "neutral",
+    "confidence": 0.0,
+    "score": 0.0,
+    "urgency": "medium"
 }}"""
         
         try:
             response_text = await self.generate(prompt, temperature=0.1)
-            response_dict = json.loads(response_text)
+            response_dict = _safe_parse_json(
+                response_text,
+                {
+                    "sentiment": "neutral",
+                    "confidence": 0.0,
+                    "score": 0.0,
+                    "urgency": "medium",
+                }
+            )
             return response_dict
         except Exception as e:
             logger.error(f"Error analyzing sentiment with Gemini: {e}")
             return {
                 "sentiment": "neutral",
                 "confidence": 0.0,
-                "score": 0.0
+                "score": 0.0,
+                "urgency": "medium",
             }
 
 class GroqProvider(LLMProvider):
@@ -162,35 +251,56 @@ class GroqProvider(LLMProvider):
     
     async def classify(self, text: str, categories: list) -> Dict[str, Any]:
         """Classify text using Groq."""
-        prompt = f"""Classify the following text into one of these categories: {', '.join(categories)}
-        
-Text: {text}
+        prompt = f"""You are a customer-care intent classifier for BeastLife.
 
-Respond in JSON format:
+Choose exactly one category from this list:
+{', '.join(categories)}
+
+Input text:
+{text}
+
+Rules:
+- Return only valid JSON.
+- Do not include markdown, backticks, or explanation.
+- confidence must be a float from 0.0 to 1.0.
+- If uncertain, choose the closest category and reduce confidence.
+
+Required JSON schema:
 {{
-    "category": "chosen category",
-    "confidence": 0.0-1.0
+    "category": "one category from the provided list",
+    "confidence": 0.0,
+    "intents": []
 }}"""
         
         try:
             response_text = await self.generate(prompt, temperature=0.2)
-            # Extract JSON from response
-            response_dict = json.loads(response_text)
+            response_dict = _safe_parse_json(
+                response_text,
+                {"category": "unknown", "confidence": 0.0, "intents": []}
+            )
             return response_dict
         except Exception as e:
             logger.error(f"Error classifying text with Groq: {e}")
-            return {"category": "unknown", "confidence": 0.0}
+            return {"category": "unknown", "confidence": 0.0, "intents": []}
     
     async def extract_entities(self, text: str) -> Dict[str, Any]:
         """Extract entities using Groq."""
-        prompt = f"""Extract named entities and key information from the following text:
+        prompt = f"""Extract customer-support entities from the text below.
 
-Text: {text}
+Text:
+{text}
 
-Respond in JSON format with entity types and values:
+Rules:
+- Return only valid JSON.
+- If a field is not present, return an empty list for that field.
+- Keep original values without rewriting.
+
+Required JSON schema:
 {{
     "order_id": [],
+    "payment_id": [],
     "product_name": [],
+    "amount": [],
     "customer_issue": [],
     "phone": [],
     "email": []
@@ -198,35 +308,72 @@ Respond in JSON format with entity types and values:
         
         try:
             response_text = await self.generate(prompt, temperature=0.1)
-            response_dict = json.loads(response_text)
+            response_dict = _safe_parse_json(
+                response_text,
+                {
+                    "order_id": [],
+                    "payment_id": [],
+                    "product_name": [],
+                    "amount": [],
+                    "customer_issue": [],
+                    "phone": [],
+                    "email": [],
+                }
+            )
             return response_dict
         except Exception as e:
             logger.error(f"Error extracting entities with Groq: {e}")
-            return {}
+            return {
+                "order_id": [],
+                "payment_id": [],
+                "product_name": [],
+                "amount": [],
+                "customer_issue": [],
+                "phone": [],
+                "email": [],
+            }
     
     async def analyze_sentiment(self, text: str) -> Dict[str, Any]:
         """Analyze sentiment using Groq."""
-        prompt = f"""Analyze the sentiment of the following text:
+        prompt = f"""Analyze customer sentiment and urgency from this text.
 
-Text: {text}
+Text:
+{text}
 
-Respond in JSON format:
+Rules:
+- Return only valid JSON.
+- sentiment must be one of: positive, negative, neutral, critical.
+- confidence must be 0.0 to 1.0.
+- score must be -1.0 to 1.0.
+- urgency must be one of: low, medium, high, critical.
+
+Required JSON schema:
 {{
-    "sentiment": "positive|negative|neutral|critical",
-    "confidence": 0.0-1.0,
-    "score": -1.0 to 1.0
+    "sentiment": "neutral",
+    "confidence": 0.0,
+    "score": 0.0,
+    "urgency": "medium"
 }}"""
         
         try:
             response_text = await self.generate(prompt, temperature=0.1)
-            response_dict = json.loads(response_text)
+            response_dict = _safe_parse_json(
+                response_text,
+                {
+                    "sentiment": "neutral",
+                    "confidence": 0.0,
+                    "score": 0.0,
+                    "urgency": "medium",
+                }
+            )
             return response_dict
         except Exception as e:
             logger.error(f"Error analyzing sentiment with Groq: {e}")
             return {
                 "sentiment": "neutral",
                 "confidence": 0.0,
-                "score": 0.0
+                "score": 0.0,
+                "urgency": "medium",
             }
 
 def get_llm_provider() -> LLMProvider:

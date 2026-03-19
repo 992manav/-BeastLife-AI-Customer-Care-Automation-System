@@ -256,15 +256,24 @@ class RAGSystem:
                 for doc in retrieved_docs
             ])
             
-            prompt = f"""Based on the following documents, answer the user's question. 
-If the answer is not in the documents, say "I don't have information about this topic."
+            prompt = f"""You are BeastLife customer support AI.
+
+Use only the provided documents to answer the user question.
+
+Rules:
+- Do not invent facts outside the documents.
+- If information is missing, say: "I don't have information about this topic."
+- Keep the response concise (2-4 sentences).
+- Use a helpful, empathetic customer-support tone.
+- If relevant, include one practical next step.
 
 Documents:
 {context}
 
-User Question: {query}
+User Question:
+{query}
 
-Answer:"""
+Final Answer:"""
             
             answer = await llm_provider.generate(prompt)
             return answer
