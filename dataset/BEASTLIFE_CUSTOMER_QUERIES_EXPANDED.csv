@@ -1,0 +1,170 @@
+Query_ID,Query_Text,Category,Sentiment,Platform,Confidence,Expected_Automation_Rate,Expected_Resolution_Path,Expected_Response_Time_ms,Customer_Satisfaction_Score
+OT-001,Can you track my order #ORD-98765?,Order Tracking,Neutral,Email,0.98,95%,Path A - API Resolution,210,4.5
+OT-002,Where's my package? Order ORD-45321,Order Tracking,Neutral,WhatsApp,0.96,95%,Path A - API Resolution,210,4.5
+OT-003,How do I check my order status? ORD-11122,Order Tracking,Neutral,Chat,0.94,95%,Path A - API Resolution,210,4.5
+OT-004,What's the status of order #ORD-56789?,Order Tracking,Neutral,Email,0.95,95%,Path A - API Resolution,210,4.5
+OT-005,Can you provide tracking for ORD-77889?,Order Tracking,Neutral,Instagram,0.93,95%,Path A - API Resolution,210,4.5
+OT-006,I need to know my order status ASAP! ORD-33445,Order Tracking,Negative,WhatsApp,0.91,95%,Path A - API Resolution,210,4.5
+OT-007,Where is my order ORD-99887? I've been waiting!,Order Tracking,Negative,Email,0.89,95%,Path A - API Resolution,210,4.5
+OT-008,When will my fitness equipment arrive? ORD-22334,Order Tracking,Neutral,Chat,0.92,95%,Path A - API Resolution,210,4.5
+OT-009,Check delivery for ORD-55443 please,Order Tracking,Positive,WhatsApp,0.94,95%,Path A - API Resolution,210,4.5
+OT-010,I'm checking order ORD-66554. Any updates?,Order Tracking,Neutral,Email,0.93,95%,Path A - API Resolution,210,4.5
+OT-011,Track order #ORD-12345 and let me know when it arrives,Order Tracking,Neutral,Chat,0.9,95%,Path A - API Resolution,210,4.5
+OT-012,Does my order ORD-88776 have GPS tracking?,Order Tracking,Neutral,WhatsApp,0.87,95%,Path B - RAG Response,320,4.5
+OT-013,"I placed 3 orders. Status on ORD-11223, ORD-33445, ORD-55667?",Order Tracking,Neutral,Email,0.85,95%,Path A - API Resolution,210,4.5
+OT-014,Order ORD-44332: Where exactly is it?,Order Tracking,Negative,Chat,0.88,95%,Path A - API Resolution,210,4.5
+OT-015,My order ORD-77889 was supposed to arrive yesterday!,Order Tracking,Negative,WhatsApp,0.86,95%,Path A - API Resolution,210,4.5
+OT-016,Is my order ORD-99111 still on schedule?,Order Tracking,Neutral,Email,0.92,95%,Path A - API Resolution,210,4.5
+OT-017,Can you rush my order ORD-22445 delivery?,Order Tracking,Neutral,Chat,0.83,90%,Path B - RAG Response,320,4.4
+OT-018,Order tracking link for ORD-33556?,Order Tracking,Neutral,Instagram,0.94,95%,Path A - API Resolution,210,4.5
+OT-019,How do I track my order ORD-44667?,Order Tracking,Neutral,Email,0.96,95%,Path A - API Resolution,210,4.5
+OT-020,Order ORD-55778: Real-time GPS tracking available?,Order Tracking,Neutral,Chat,0.84,90%,Path B - RAG Response,320,4.4
+OT-021,Track ORD-66889. Also when can I expect it?,Order Tracking,Neutral,WhatsApp,0.89,95%,Path A - API Resolution,210,4.5
+OT-022,I have order ORD-77990. I need updates every hour,Order Tracking,Negative,Email,0.81,85%,Path B - RAG Response,320,4.3
+OT-023,Order status for ORD-88001 and ORD-99112?,Order Tracking,Neutral,Chat,0.87,95%,Path A - API Resolution,210,4.5
+OT-024,When will ORD-11334 arrive at my location?,Order Tracking,Neutral,WhatsApp,0.91,95%,Path A - API Resolution,210,4.5
+OT-025,Tracking for ORD-22445: Is it on the way?,Order Tracking,Neutral,Email,0.94,95%,Path A - API Resolution,210,4.5
+OT-026,Order ORD-33556 status update please,Order Tracking,Positive,Chat,0.95,95%,Path A - API Resolution,210,4.5
+OT-027,Can't find my order ORD-44667 tracking number,Order Tracking,Neutral,Instagram,0.92,95%,Path A - API Resolution,210,4.5
+OT-028,Help me track order ORD-55778 ASAP!,Order Tracking,Negative,WhatsApp,0.88,95%,Path A - API Resolution,210,4.5
+OT-029,Is my order ORD-66889 at my local hub?,Order Tracking,Neutral,Email,0.85,90%,Path B - RAG Response,320,4.4
+OT-030,Order ORD-77990: What's the delivery time window?,Order Tracking,Neutral,Chat,0.9,95%,Path A - API Resolution,210,4.5
+OT-031,Track my 2 orders: ORD-88001 and ORD-99112,Order Tracking,Neutral,WhatsApp,0.86,95%,Path A - API Resolution,210,4.5
+OT-032,When is ORD-11334 expected to be delivered?,Order Tracking,Neutral,Email,0.93,95%,Path A - API Resolution,210,4.5
+OT-033,"Order status: ORD-22445, ORD-33556, ORD-44667?",Order Tracking,Neutral,Chat,0.84,90%,Path A - API Resolution,210,4.4
+OT-034,I'm waiting for ORD-55778. Where is it now?,Order Tracking,Negative,Instagram,0.87,95%,Path A - API Resolution,210,4.5
+OT-035,Last update on order ORD-66889?,Order Tracking,Neutral,WhatsApp,0.91,95%,Path A - API Resolution,210,4.5
+DD-001,My order was supposed to arrive yesterday,Delivery Delays,Negative,Email,0.92,70%,Path A - API Resolution,340,3.8
+DD-002,Expected delivery today but no sign of package,Delivery Delays,Negative,WhatsApp,0.9,70%,Path A - API Resolution,340,3.8
+DD-003,When will my delayed order arrive?,Delivery Delays,Negative,Chat,0.88,70%,Path A - API Resolution,340,3.8
+DD-004,Package says 2 days late now,Delivery Delays,Negative,Email,0.85,70%,Path B - RAG Response,420,3.7
+DD-005,My delivery is running behind schedule,Delivery Delays,Negative,Instagram,0.87,70%,Path A - API Resolution,340,3.8
+DD-006,It's been a week and my order hasn't arrived!!,Delivery Delays,Negative,WhatsApp,0.88,60%,Path C - Escalation,600,3.5
+DD-007,This is taking forever! Where's my delivery?,Delivery Delays,Negative,Email,0.86,60%,Path C - Escalation,600,3.5
+DD-008,Expected delivery 5 days ago - still nothing!,Delivery Delays,Negative,Chat,0.84,60%,Path C - Escalation,600,3.5
+DD-009,I'm very disappointed. Order still hasn't arrived,Delivery Delays,Negative,WhatsApp,0.82,60%,Path C - Escalation,600,3.5
+DD-010,This delivery delay is unacceptable!,Delivery Delays,Negative,Email,0.8,50%,Path C - Escalation,600,3.4
+DD-011,My order is 2 weeks late! This is ridiculous!,Delivery Delays,Critical,WhatsApp,0.78,30%,Path C - Escalation,600,2.8
+DD-012,2 weeks waiting! I want a refund or replacement NOW!,Delivery Delays,Critical,Email,0.75,25%,Path C - Escalation,600,2.5
+DD-013,Ordered 3 weeks ago - STILL no delivery!,Delivery Delays,Critical,Chat,0.76,30%,Path C - Escalation,600,2.8
+DD-014,This is the worst service ever. Package is 10 days late!,Delivery Delays,Negative,Instagram,0.77,40%,Path C - Escalation,600,3.2
+DD-015,Delivery is so delayed I'm considering canceling!,Delivery Delays,Negative,WhatsApp,0.81,50%,Path C - Escalation,600,3.4
+DD-016,Why is my delivery taking this long?,Delivery Delays,Negative,Email,0.89,70%,Path A - API Resolution,340,3.8
+DD-017,Will my package ever arrive??,Delivery Delays,Negative,Chat,0.86,70%,Path A - API Resolution,340,3.8
+DD-018,Expected 5 days ago still not here!,Delivery Delays,Negative,WhatsApp,0.87,70%,Path A - API Resolution,340,3.8
+DD-019,This is beyond unacceptable! 2 week delay!,Delivery Delays,Critical,Email,0.77,30%,Path C - Escalation,600,2.8
+DD-020,My delivery keeps getting delayed!,Delivery Delays,Negative,Chat,0.85,65%,Path B - RAG Response,420,3.7
+DD-021,How much longer do I have to wait??,Delivery Delays,Negative,Instagram,0.84,65%,Path B - RAG Response,420,3.7
+DD-022,Fed up with these delays! Where's my order?!,Delivery Delays,Negative,WhatsApp,0.82,60%,Path C - Escalation,600,3.5
+RF-001,I want a refund for my last purchase,Refund Requests,Neutral,Email,0.94,85%,Path A - API Resolution,290,4.1
+RF-002,Can I get my money back? I changed my mind,Refund Requests,Neutral,WhatsApp,0.92,85%,Path A - API Resolution,290,4.1
+RF-003,Please process a refund for order #ORD-12345,Refund Requests,Neutral,Chat,0.96,85%,Path A - API Resolution,290,4.1
+RF-004,I'd like to return this item,Refund Requests,Neutral,Email,0.95,85%,Path A - API Resolution,290,4.1
+RF-005,How do I get a refund?,Refund Requests,Neutral,Instagram,0.93,85%,Path B - RAG Response,420,4.0
+RF-006,The product arrived damaged - I need a refund!,Refund Requests,Negative,WhatsApp,0.92,95%,Path A - API Resolution,290,4.3
+RF-007,Defective item - pushing for full refund,Refund Requests,Negative,Email,0.9,95%,Path A - API Resolution,290,4.3
+RF-008,Product doesn't match description - want refund,Refund Requests,Negative,Chat,0.88,90%,Path A - API Resolution,290,4.2
+RF-009,Got the wrong item - need refund ASAP!,Refund Requests,Negative,WhatsApp,0.91,95%,Path A - API Resolution,290,4.3
+RF-010,Item is broken - requesting full refund,Refund Requests,Negative,Email,0.89,90%,Path A - API Resolution,290,4.2
+RF-011,I want a refund but still want to keep the product,Refund Requests,Neutral,Chat,0.72,40%,Path B - RAG Response,420,3.8
+RF-012,Refund request for ORD-12345 - delivery took too long,Refund Requests,Negative,WhatsApp,0.75,70%,Path C - Escalation,450,3.9
+RF-013,Can I get partial refund?,Refund Requests,Neutral,Email,0.81,75%,Path B - RAG Response,420,3.9
+RF-014,Refund all charges - very unhappy!,Refund Requests,Negative,Chat,0.78,70%,Path C - Escalation,450,3.9
+RF-015,I need a refund AND apology for late delivery!,Refund Requests,Negative,Instagram,0.76,65%,Path C - Escalation,450,3.8
+RF-016,Still waiting 2 weeks for refund on returned item,Refund Requests,Negative,WhatsApp,0.79,70%,Path C - Escalation,450,3.9
+RF-017,Demand refund - service was poor!,Refund Requests,Negative,Email,0.74,60%,Path C - Escalation,450,3.7
+RF-018,Can I get store credit instead of refund?,Refund Requests,Neutral,Chat,0.85,80%,Path B - RAG Response,420,4.0
+PC-001,This product quality is terrible!,Product Complaints,Negative,Email,0.89,60%,Path B - RAG Response,420,3.6
+PC-002,The product doesn't work as advertised,Product Complaints,Negative,WhatsApp,0.87,60%,Path B - RAG Response,420,3.6
+PC-003,Product performance is below expectations,Product Complaints,Negative,Chat,0.85,55%,Path B - RAG Response,420,3.5
+PC-004,This item is not what was described,Product Complaints,Negative,Instagram,0.88,60%,Path B - RAG Response,420,3.6
+PC-005,Terrible product - completely disappointed,Product Complaints,Negative,Email,0.86,60%,Path B - RAG Response,420,3.6
+PC-006,The fitness tracker arrived BROKEN!,Product Complaints,Negative,WhatsApp,0.92,90%,Path A - API Resolution,290,4.2
+PC-007,Product came with missing parts,Product Complaints,Negative,Email,0.9,85%,Path A - API Resolution,290,4.1
+PC-008,This app keeps crashing - completely unusable!,Product Complaints,Negative,Chat,0.91,80%,Path B - RAG Response,420,3.9
+PC-009,Equipment arrived damaged in shipping,Product Complaints,Negative,Instagram,0.89,85%,Path A - API Resolution,290,4.1
+PC-010,Product stopped working after 2 days,Product Complaints,Negative,WhatsApp,0.88,85%,Path A - API Resolution,290,4.1
+PC-011,I'm very frustrated with this product quality!,Product Complaints,Negative,Email,0.84,50%,Path C - Escalation,450,3.4
+PC-012,This supplement tastes awful!,Product Complaints,Negative,Chat,0.82,45%,Path B - RAG Response,420,3.3
+PC-013,Software has SO many bugs!,Product Complaints,Negative,WhatsApp,0.83,50%,Path C - Escalation,450,3.4
+PC-014,Worst purchase I've ever made,Product Complaints,Negative,Instagram,0.81,40%,Path C - Escalation,450,3.2
+PC-015,Can't believe I paid for this defective item!,Product Complaints,Negative,Email,0.79,40%,Path C - Escalation,450,3.2
+PI-001,My card was declined. Can you help?,Payment Issues,Neutral,Email,0.94,80%,Path A - API Resolution,180,4.2
+PI-002,I've been charged twice for the same order!,Payment Issues,Negative,WhatsApp,0.96,95%,Path A - API Resolution,180,4.4
+PI-003,Why was I charged 3 times?!,Payment Issues,Negative,Chat,0.95,95%,Path A - API Resolution,180,4.4
+PI-004,My payment keeps failing,Payment Issues,Neutral,WhatsApp,0.92,80%,Path A - API Resolution,180,4.2
+PI-005,I see duplicate charges on my credit card,Payment Issues,Negative,Email,0.97,98%,Path A - API Resolution,180,4.5
+SI-001,How do I cancel my subscription?,Subscription Issues,Neutral,Email,0.96,90%,Path B - RAG Response,150,4.4
+SI-002,I want to upgrade to Premium plan,Subscription Issues,Positive,Chat,0.94,90%,Path B - RAG Response,150,4.4
+SI-003,Can I pause my membership temporarily?,Subscription Issues,Neutral,WhatsApp,0.93,90%,Path A - API Resolution,150,4.4
+GQ-001,What's your return policy?,General Questions,Neutral,Email,0.95,98%,Path B - RAG Response,120,4.6
+GQ-002,How can I contact customer support?,General Questions,Neutral,Chat,0.98,98%,Path B - RAG Response,120,4.6
+OR-101,Can you check the status of my order ORD-46048?,Order Tracking,Positive,Email,0.92,95%,Path A - API Resolution,210,3.0
+OR-102,Is my order ORD-95181 still processing?,Order Tracking,Negative,Email,0.94,95%,Path A - API Resolution,210,3.1
+OR-103,Where is my package from order ORD-57052?,Order Tracking,Positive,Email,0.86,95%,Path A - API Resolution,210,3.1
+OR-104,Is my order ORD-47930 still processing?,Order Tracking,Negative,Chat,0.81,95%,Path A - API Resolution,210,3.1
+OR-105,I ordered on 2026-03-13. Where's my delivery for ORD-80010?,Order Tracking,Positive,WhatsApp,0.91,95%,Path A - API Resolution,210,3.3
+OR-106,Is ORD-51245 out for delivery today?,Order Tracking,Neutral,WhatsApp,0.81,95%,Path A - API Resolution,210,3.4
+OR-107,I ordered on 2026-03-16. Where's my delivery for ORD-76784?,Order Tracking,Neutral,Instagram,0.89,95%,Path A - API Resolution,210,4.4
+OR-108,Can you check the status of my order ORD-99166?,Order Tracking,Positive,Chat,0.83,95%,Path A - API Resolution,210,4.5
+DE-109,I'm considering canceling due to these delays. Order ORD-89818,Delivery Delays,Negative,Email,0.97,50%,Path A - API Resolution,420,3.4
+DE-110,How much longer do I have to wait? 16 days is too long!,Delivery Delays,Negative,WhatsApp,0.93,50%,Path A - API Resolution,340,4.1
+DE-111,When will ORD-62296 finally arrive? It's 12 days late!,Delivery Delays,Critical,WhatsApp,0.78,70%,Path C - Escalation,600,3.1
+DE-112,My order was supposed to arrive 2 days ago!,Delivery Delays,Negative,Chat,0.87,50%,Path C - Escalation,340,3.3
+DE-113,This delivery is taking way too long. Order ORD-96374,Delivery Delays,Negative,Email,0.76,70%,Path B - RAG Response,340,3.7
+DE-114,I need my order ORD-34050 urgently - it's 8 days late,Delivery Delays,Critical,Email,0.94,70%,Path A - API Resolution,340,3.8
+DE-115,I need my order ORD-17685 urgently - it's 1 days late,Delivery Delays,Critical,Instagram,0.82,70%,Path A - API Resolution,600,3.1
+DE-116,The estimated delivery date has passed. Order ORD-75909,Delivery Delays,Negative,Email,0.77,50%,Path A - API Resolution,600,4.0
+DE-117,I need my order ORD-96163 urgently - it's 17 days late,Delivery Delays,Negative,Chat,0.9,70%,Path A - API Resolution,420,3.0
+DE-118,How much longer do I have to wait? 18 days is too long!,Delivery Delays,Critical,Chat,0.78,70%,Path B - RAG Response,600,4.0
+RE-119,I want to return this item and get a refund,Refund Requests,Negative,Email,0.78,70%,Path B - RAG Response,420,4.1
+RE-120,I changed my mind. Can I return this for a refund?,Refund Requests,Negative,Chat,0.76,70%,Path C - Escalation,450,3.9
+RE-121,Can I get a refund for order ORD-19862?,Refund Requests,Negative,Instagram,0.88,85%,Path A - API Resolution,450,4.1
+RE-122,This is defective. Demanding a refund!,Refund Requests,Neutral,WhatsApp,0.97,85%,Path B - RAG Response,450,3.4
+RE-123,Can I get a refund for order ORD-60140?,Refund Requests,Negative,WhatsApp,0.83,85%,Path B - RAG Response,290,3.6
+RE-124,Can I get store credit instead of a refund?,Refund Requests,Neutral,Chat,0.95,70%,Path A - API Resolution,450,3.7
+RE-125,Can I get store credit instead of a refund?,Refund Requests,Neutral,Email,0.91,70%,Path C - Escalation,420,4.5
+RE-126,This is defective. Demanding a refund!,Refund Requests,Negative,Instagram,0.82,75%,Path C - Escalation,420,4.5
+RE-127,The product arrived damaged. I need a full refund!,Refund Requests,Negative,Instagram,0.82,70%,Path B - RAG Response,450,3.8
+RE-128,The product arrived damaged. I need a full refund!,Refund Requests,Negative,WhatsApp,0.77,75%,Path A - API Resolution,290,4.0
+RE-129,Can I get a refund for order ORD-69692?,Refund Requests,Negative,Instagram,0.91,85%,Path C - Escalation,420,3.3
+RE-130,Can I get store credit instead of a refund?,Refund Requests,Negative,Instagram,0.78,70%,Path B - RAG Response,450,3.7
+PR-131,Product stopped working after 9 days,Product Complaints,Negative,Instagram,0.81,50%,Path C - Escalation,420,3.5
+PR-132,The supplement is not what was described,Product Complaints,Negative,Instagram,0.8,40%,Path B - RAG Response,420,4.4
+PR-133,Terrible build quality for the price!,Product Complaints,Critical,Instagram,0.92,40%,Path B - RAG Response,420,3.7
+PR-134,This product quality is absolutely terrible!,Product Complaints,Critical,Email,0.96,40%,Path B - RAG Response,290,4.4
+PR-135,I'm very disappointed with this purchase,Product Complaints,Critical,Instagram,0.83,50%,Path B - RAG Response,290,4.6
+PR-136,This app keeps crashing - completely unusable!,Product Complaints,Negative,Email,0.8,60%,Path B - RAG Response,420,4.1
+PR-137,This app keeps crashing - completely unusable!,Product Complaints,Critical,Email,0.77,40%,Path B - RAG Response,450,4.3
+PR-138,The product arrived broken!,Product Complaints,Negative,Chat,0.93,40%,Path C - Escalation,420,3.2
+PR-139,This app keeps crashing - completely unusable!,Product Complaints,Negative,Chat,0.87,50%,Path C - Escalation,290,3.4
+PR-140,Product stopped working after 20 days,Product Complaints,Critical,Chat,0.76,60%,Path C - Escalation,450,4.4
+PR-141,The app is not what was described,Product Complaints,Critical,WhatsApp,0.88,40%,Path C - Escalation,420,3.4
+PR-142,The product arrived broken!,Product Complaints,Negative,Chat,0.83,50%,Path C - Escalation,450,3.3
+PA-143,There's an error with my payment,Payment Issues,Positive,Email,0.89,95%,Path A - API Resolution,180,3.2
+PA-144,My card was declined. Can you help?,Payment Issues,Neutral,Chat,0.95,95%,Path A - API Resolution,180,4.3
+PA-145,My payment method was rejected,Payment Issues,Neutral,Chat,0.78,95%,Path A - API Resolution,180,4.5
+PA-146,I see duplicate charges on my credit card,Payment Issues,Positive,Email,0.97,95%,Path A - API Resolution,180,3.9
+PA-147,Why was I charged $250 times?!,Payment Issues,Neutral,Chat,0.8,95%,Path A - API Resolution,180,4.3
+PA-148,My payment keeps failing,Payment Issues,Negative,Email,0.94,95%,Path A - API Resolution,180,4.1
+PA-149,My payment method was rejected,Payment Issues,Positive,Instagram,0.76,95%,Path A - API Resolution,180,3.9
+PA-150,My card was declined. Can you help?,Payment Issues,Negative,Instagram,0.87,95%,Path A - API Resolution,180,3.7
+SU-151,I want to upgrade to the Premium plan,Subscription Issues,Positive,Email,0.76,90%,Path B - RAG Response,150,3.7
+SU-152,How do I change my subscription plan?,Subscription Issues,Neutral,WhatsApp,0.8,90%,Path B - RAG Response,150,4.1
+SU-153,Can I get a discount on my subscription?,Subscription Issues,Neutral,Email,0.86,90%,Path B - RAG Response,150,3.4
+SU-154,When is my next billing date?,Subscription Issues,Neutral,Instagram,0.81,90%,Path B - RAG Response,150,3.8
+SU-155,Can I pause my membership temporarily?,Subscription Issues,Positive,Chat,0.84,90%,Path B - RAG Response,150,4.2
+SU-156,How do I downgrade my plan?,Subscription Issues,Neutral,Chat,0.78,90%,Path B - RAG Response,150,4.4
+SU-157,Can I pause my membership temporarily?,Subscription Issues,Positive,Email,0.84,90%,Path B - RAG Response,150,3.1
+SU-158,Can I get a discount on my subscription?,Subscription Issues,Negative,Chat,0.79,90%,Path B - RAG Response,150,3.4
+SU-159,How do I downgrade my plan?,Subscription Issues,Neutral,Instagram,0.89,90%,Path B - RAG Response,150,3.4
+SU-160,Can I get a discount on my subscription?,Subscription Issues,Positive,Email,0.88,90%,Path B - RAG Response,150,4.4
+GE-161,What payment methods do you accept?,General Questions,Neutral,Chat,0.88,98%,Path B - RAG Response,120,4.3
+GE-162,How long does shipping usually take?,General Questions,Neutral,WhatsApp,0.89,98%,Path B - RAG Response,120,3.6
+GE-163,Do you offer international shipping?,General Questions,Neutral,Chat,0.78,98%,Path B - RAG Response,120,4.3
+GE-164,Can I change my order after placing it?,General Questions,Neutral,Chat,0.97,98%,Path B - RAG Response,120,4.2
+GE-165,How long does shipping usually take?,General Questions,Neutral,WhatsApp,0.77,98%,Path B - RAG Response,120,4.3
+GE-166,How long does shipping usually take?,General Questions,Neutral,Instagram,0.82,98%,Path B - RAG Response,120,4.5
+GE-167,Do you offer gift wrapping?,General Questions,Neutral,Instagram,0.9,98%,Path B - RAG Response,120,4.5
+GE-168,Do you have a physical store?,General Questions,Neutral,Chat,0.76,98%,Path B - RAG Response,120,4.6
+GE-169,What's your return policy?,General Questions,Neutral,WhatsApp,0.94,98%,Path B - RAG Response,120,3.9
