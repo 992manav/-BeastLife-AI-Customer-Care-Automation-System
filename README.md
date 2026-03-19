@@ -2,6 +2,7 @@
 
 A **production-grade AI system** for automating customer support using **LangGraph** for agent orchestration, **Google Gemini** or **Groq LLM**, and **FAISS** for retrieval-augmented generation.
 
+
 > **🏆 Beastlife AI Automation & Customer Intelligence Challenge - Complete Solution**  
 > Automatically analyze, categorize, and resolve customer queries across all platforms with 85% automation rate and 95% reduction in response time.
 
@@ -23,6 +24,7 @@ This system directly addresses all requirements of the Beastlife AI Challenge:
 **📋 See [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md) for complete requirement verification.**
 
 ---
+<img width="1808" height="1024" alt="670f077c-a208-4f59-89a9-b2e547e45ade" src="https://github.com/user-attachments/assets/15ec31bd-a5e0-4af5-b2d0-9ee645250e7b" />
 
 ## 🎯 System Overview
 
@@ -98,6 +100,9 @@ LLM Providers:    Google Gemini (gemini-1.5-) or Groq (Mixtral/Llama)
 Database:         SQLite (default) or PostgreSQL
 Concurrency:      asyncio
 ```
+
+<img width="1024" height="1536" alt="fecaec0a-b690-437c-9291-6dc5ff14c679" src="https://github.com/user-attachments/assets/18d2077a-c162-4e7c-984c-c5277e679a19" />
+
 
 ## 📦 Installation
 
