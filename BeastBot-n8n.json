@@ -1,0 +1,1979 @@
+{
+  "name": "BeastBot - Customer Care Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi! I'm BeastBot, your Beastlife support assistant. How can I help you today?",
+        "options": {
+          "inputPlaceholder": "Ask about your order, products, or anything else...",
+          "showWelcomeScreen": true,
+          "getStarted": "Start Chat",
+          "subtitle": "Get instant help with orders, products & more",
+          "title": "BeastBot - Beastlife Support"
+        }
+      },
+      "id": "f0b3e4b7-e76b-4e4e-99e4-6b76adc229f9",
+      "name": "BeastBot Chat",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -432,
+        704
+      ],
+      "webhookId": "bcc45018-b922-4ae3-bc63-1527fcb20c73"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ \"Query: \" + $json.chatInput + \"\\nContext: \" + ($json.context ? JSON.stringify($json.context) : \"none\") + \"\\nIntent: \" + ($json.intent ?? \"unknown\") }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are BeastBot — the AI Customer Care Automation System for Beastlife.\n\nClassify the query into ONE category:\n1. order_tracking\n2. delivery_delay\n3. refund_request\n4. product_complaint\n5. subscription_issue\n6. payment_failure\n7. general_question\n\nconfidence: 0.0–1.0 (how confident you are)\n\nSet requires_human = true if confidence < 0.5\n\nDECISION LOGIC:\nIf confidence < 0.5 OR requires_human = true:\n→ path = \"C\" (Escalation)\n→ response = \"I understand this is important. Let me escalate to our support team.\"\n\nElse if category == general_question:\n→ path = \"B\" (Knowledge Base - will use RAG)\n→ response = \"Let me find the best answer for you.\"\n\nElse:\n→ path = \"A\" (Auto Resolution - will call API)\n→ response = \"Processing your request...\"\n\nReturn JSON with: category, confidence, requires_human, path, response"
+        }
+      },
+      "id": "8f0474e2-a5a8-4dd5-8ba2-ac43bdbcf93a",
+      "name": "BeastBot Classifier",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        880,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": {
+          "category": "order_tracking",
+          "sentiment": "neutral",
+          "urgency": "medium",
+          "confidence": 0.85,
+          "requires_human": false,
+          "path": "A",
+          "response": "Your order is currently in transit and will arrive soon."
+        }
+      },
+      "id": "e191e3c7-6be2-4f73-b20b-e178ed618e4f",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1072,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.path }}",
+                    "rightValue": "A",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Auto Resolution"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.path }}",
+                    "rightValue": "B",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Knowledge Base"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.path }}",
+                    "rightValue": "C",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Escalation"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8a06f55e-03e3-47e2-9026-f0759d501ce2",
+      "name": "Route by Path",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1728,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "finalResponse",
+              "value": "={{ $json.order_status ? \"Your order is \" + $json.order_status + \" and will arrive by \" + $json.eta : $json.output?.response ?? \"Your request has been processed.\" }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "category",
+              "value": "={{ $json.output?.category ?? \"auto_resolved\" }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "api_data",
+              "value": "={{ $json }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b0b33265-d52e-423f-92a0-a07c79ab3e77",
+      "name": "Auto Resolution Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2624,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "finalResponse",
+              "value": "={{ $json.output.response }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "category",
+              "value": "={{ $json.output.category }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "sentiment",
+              "value": "={{ $json.output.sentiment }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cfa0852a-1eae-447a-a416-d9fc59397357",
+      "name": "Knowledge Base Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2176,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "finalResponse",
+              "value": "={{ $(\"Send Escalation Alert\").item.json.ok ? \"Your issue has been escalated to our support team. They will contact you shortly.\" : \"Escalation in progress.\" }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "category",
+              "value": "={{ $(\"Log Interaction\").item.json.category ?? \"escalation\" }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "sentiment",
+              "value": "={{ $(\"Log Interaction\").item.json.sentiment ?? \"critical\" }}",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "escalated",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8b44eecc-438c-4c4a-b9a7-1346eef90a50",
+      "name": "Escalation Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "d694cd2d-6c14-4e5d-937a-2fc9e7c5d241",
+      "name": "Groq Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        816,
+        672
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "W7XYh9EYufB34FLk",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "3a1b8416-06af-498f-888a-88f738153f94",
+      "name": "Manual Trigger - Generate Dataset",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate comprehensive customer care dataset with 500 records\nconst categories = ['order_tracking', 'delivery_delay', 'refund_request', 'product_complaint', 'subscription_issue', 'payment_failure', 'general_question'];\nconst sentiments = ['positive', 'neutral', 'negative', 'critical'];\nconst urgencies = ['low', 'medium', 'high', 'critical'];\nconst products = ['Whey Protein', 'Whey Isolate', 'Creatine', 'Mass Gainer', 'Pre-Workout', 'BCAA', 'Multivitamin'];\nconst resolutionPaths = ['A', 'B', 'C'];\n\nconst queries = {\n  order_tracking: [\n    'Where is my order BL-{id}?',\n    'Can you track my order {id}?',\n    'Order status for BL-{id}',\n    'When will order {id} arrive?'\n  ],\n  delivery_delay: [\n    'My order BL-{id} is delayed',\n    'Order {id} not received yet',\n    'Delivery is very late for BL-{id}',\n    'Still waiting for order {id}'\n  ],\n  refund_request: [\n    'I want refund for order BL-{id}',\n    'Please refund my payment for {id}',\n    'Cancel order {id} and refund',\n    'Refund request for BL-{id}'\n  ],\n  product_complaint: [\n    'Product {product} is damaged',\n    '{product} quality is poor',\n    'Received wrong product instead of {product}',\n    '{product} expired on arrival'\n  ],\n  subscription_issue: [\n    'Cancel my subscription',\n    'Change subscription delivery date',\n    'Pause my monthly subscription',\n    'Update subscription address'\n  ],\n  payment_failure: [\n    'Payment failed for order BL-{id}',\n    'Transaction {payment} not processed',\n    'Money deducted but order not placed',\n    'Payment error for {id}'\n  ],\n  general_question: [\n    'What is {product}?',\n    'How to use {product}?',\n    'Is {product} safe?',\n    'Difference between Whey and Isolate?'\n  ]\n};\n\nconst responses = {\n  A: [\n    'Your order is currently in transit and will arrive soon.',\n    'We are sorry for the delay. Your order is on the way.',\n    'Your refund request has been initiated successfully.',\n    'Payment issue resolved. Please try again.',\n    'Your subscription has been updated as requested.'\n  ],\n  B: [\n    'Whey Protein contains 24g protein per serving with lactose.',\n    'Whey Isolate is low lactose, suitable for sensitive users.',\n    'Creatine is safe at 3-5g daily dosage.',\n    'Mass Gainer provides high calories for weight gain.',\n    'Pre-Workout boosts energy and focus during training.'\n  ],\n  C: [\n    'Hi, I understand this is important. I have escalated your issue to our support team. They will contact you shortly.',\n    'Your case has been escalated to senior support. Expect a call within 24 hours.',\n    'This requires human attention. Our team will reach out soon.'\n  ]\n};\n\nconst dataset = [];\n\nfor (let i = 1; i <= 500; i++) {\n  const category = categories[Math.floor(Math.random() * categories.length)];\n  const sentiment = sentiments[Math.floor(Math.random() * sentiments.length)];\n  const urgency = urgencies[Math.floor(Math.random() * urgencies.length)];\n  const product = products[Math.floor(Math.random() * products.length)];\n  const path = resolutionPaths[Math.floor(Math.random() * resolutionPaths.length)];\n  \n  const queryTemplates = queries[category];\n  let query = queryTemplates[Math.floor(Math.random() * queryTemplates.length)];\n  query = query.replace('{id}', 10000 + i);\n  query = query.replace('{product}', product);\n  query = query.replace('{payment}', 'pay_' + Math.random().toString(36).substr(2, 9));\n  \n  const confidence = Math.random() * 0.5 + 0.5; // 0.5 to 1.0\n  const requires_human = sentiment === 'critical' || confidence < 0.6;\n  \n  const responseList = responses[path];\n  const response = responseList[Math.floor(Math.random() * responseList.length)];\n  \n  dataset.push({\n    id: i,\n    timestamp: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),\n    customer_query: query,\n    category: category,\n    sentiment: sentiment,\n    urgency: urgency,\n    confidence: parseFloat(confidence.toFixed(2)),\n    requires_human: requires_human,\n    order_id: category.includes('order') || category.includes('delivery') || category.includes('refund') ? 'BL-' + (10000 + i) : null,\n    payment_id: category === 'payment_failure' ? 'pay_' + Math.random().toString(36).substr(2, 9) : null,\n    product_name: category === 'product_complaint' || category === 'general_question' ? product : null,\n    amount: category === 'refund_request' || category === 'payment_failure' ? Math.floor(Math.random() * 5000) + 500 : null,\n    resolution_path: path,\n    bot_response: response,\n    resolution_time_seconds: Math.floor(Math.random() * 300) + 10,\n    customer_satisfied: Math.random() > 0.3,\n    escalated_to_human: requires_human\n  });\n}\n\nreturn dataset.map(item => ({ json: item }));"
+      },
+      "id": "1a092805-4993-42a7-832e-7d64aa2273e3",
+      "name": "Generate Sample Dataset",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "beastbot_customer_interactions",
+        "columns": {
+          "column": [
+            {
+              "name": "id",
+              "type": "number"
+            },
+            {
+              "name": "timestamp"
+            },
+            {
+              "name": "customer_query"
+            },
+            {
+              "name": "category"
+            },
+            {
+              "name": "sentiment"
+            },
+            {
+              "name": "urgency"
+            },
+            {
+              "name": "confidence",
+              "type": "number"
+            },
+            {
+              "name": "requires_human",
+              "type": "boolean"
+            },
+            {
+              "name": "order_id"
+            },
+            {
+              "name": "payment_id"
+            },
+            {
+              "name": "product_name"
+            },
+            {
+              "name": "amount",
+              "type": "number"
+            },
+            {
+              "name": "resolution_path"
+            },
+            {
+              "name": "bot_response"
+            },
+            {
+              "name": "resolution_time_seconds",
+              "type": "number"
+            },
+            {
+              "name": "customer_satisfied",
+              "type": "boolean"
+            },
+            {
+              "name": "escalated_to_human",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "23878e76-cba4-4198-8808-344dcfe17d39",
+      "name": "Create Data Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        96,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "message",
+              "value": "All 500 records inserted successfully",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "total_records",
+              "value": 500,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0b9f6d4a-dbbc-4538-b214-efd319c9c4b3",
+      "name": "Batch Complete",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "beastbot_customer_interactions"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {
+          "optimizeBulk": true
+        }
+      },
+      "id": "685aa83a-cb71-4c99-b67a-4fdfd9af425e",
+      "name": "Insert to Data Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 50,
+        "options": {}
+      },
+      "id": "7cbd87fd-22bc-44bf-b8e2-a73c7595c0c0",
+      "name": "Batch Insert Loop",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        96,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "beastbot_customer_interactions"
+        },
+        "filters": {
+          "conditions": []
+        },
+        "returnAll": true
+      },
+      "id": "fc9ca54d-98f1-4e1a-8a0c-dc5a75d5e897",
+      "name": "Calculate Statistics",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "field": "id"
+            },
+            {
+              "aggregation": "average",
+              "field": "confidence"
+            },
+            {
+              "aggregation": "average",
+              "field": "resolution_time_seconds"
+            }
+          ]
+        },
+        "options": {
+          "outputFormat": "separateItems"
+        }
+      },
+      "id": "a6907044-fb36-441e-8567-4d100ad6e4ab",
+      "name": "Aggregate by Category",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        768,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "35e04cfe-48e1-48c7-9816-e2ddc729cfd6",
+      "name": "Combine Analytics",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        992,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "field": "id"
+            },
+            {
+              "aggregation": "countUnique",
+              "field": "category"
+            }
+          ]
+        },
+        "options": {
+          "outputFormat": "separateItems"
+        }
+      },
+      "id": "a530c23a-db92-4ea8-8d26-74803561a3e6",
+      "name": "Aggregate by Sentiment",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        768,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "report_title",
+              "value": "BeastBot Customer Care Analytics Report",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "generated_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "total_interactions",
+              "value": 500,
+              "type": "number"
+            },
+            {
+              "id": "4",
+              "name": "analytics_data",
+              "value": "={{ $input.all().map(i => i.json) }}",
+              "type": "array"
+            },
+            {
+              "id": "5",
+              "name": "summary",
+              "value": "Comprehensive dataset with 500 customer interactions across 7 categories, 4 sentiment levels, and 3 resolution paths",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bf6bc7c2-27e0-4abc-a786-3549c170fc22",
+      "name": "Format Final Report",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1216,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "c8d6b38e-e7c0-4926-9270-a033b8dd0d33",
+      "name": "Schedule Daily Report",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -352,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "beastbot_customer_interactions"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "timestamp",
+              "condition": ">=",
+              "keyValue": "={{ $today.toISO() }}"
+            }
+          ]
+        },
+        "returnAll": true,
+        "orderBy": true,
+        "orderByColumn": "timestamp"
+      },
+      "id": "fffedbdc-04c6-494c-a137-20262b5729ea",
+      "name": "Fetch Daily Data",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.escalated_to_human }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "50cefad2-1851-4f54-b029-67c60a17f452",
+      "name": "Filter Escalations",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        96,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "field": "id"
+            },
+            {
+              "aggregation": "average",
+              "field": "confidence"
+            },
+            {
+              "aggregation": "countUnique",
+              "field": "category"
+            }
+          ]
+        },
+        "options": {
+          "outputFormat": "singleItem"
+        }
+      },
+      "id": "bfff81e9-93ec-4a1e-99c2-23b64cb2ee71",
+      "name": "Daily Summary",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "beastbot_customer_interactions"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "customer_query": "={{ $json.output.query ?? \"N/A\" }}",
+            "category": "={{ $json.output.category }}",
+            "sentiment": "={{ $json.output.sentiment }}",
+            "urgency": "={{ $json.output.urgency ?? \"medium\" }}",
+            "confidence": "={{ $json.output.confidence }}",
+            "requires_human": "={{ $json.output.requires_human }}",
+            "order_id": "={{ $json.output.entities?.order_id }}",
+            "payment_id": "={{ $json.output.entities?.payment_id }}",
+            "product_name": "={{ $json.output.entities?.product_name }}",
+            "amount": "={{ $json.output.entities?.amount }}",
+            "resolution_path": "={{ $json.output.path }}",
+            "bot_response": "={{ $json.output.response }}",
+            "escalated_to_human": "={{ $json.output.requires_human }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "f6c1bba1-482b-440d-a231-3faac7ccfdb8",
+      "name": "Log Interaction",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1952,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "path": "beastbot-dashboard",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "075ba8c1-3348-4f49-a415-f3b7d3e87efd",
+      "name": "Dashboard Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1440,
+        -48
+      ],
+      "webhookId": "2de963db-ee42-4f43-8fa2-95ff9a841efe"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "beastbot_customer_interactions"
+        },
+        "filters": {
+          "conditions": []
+        },
+        "returnAll": true
+      },
+      "id": "a9866a39-d8d4-4d3e-b8f0-b8621f50f33a",
+      "name": "Fetch All Interactions",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "field": "id"
+            }
+          ]
+        },
+        "options": {
+          "outputFormat": "separateItems"
+        }
+      },
+      "id": "2ca61eab-b919-4f82-8bb2-a85933994c9f",
+      "name": "Calculate Category Distribution",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        1888,
+        -432
+      ]
+    },
+    {
+      "parameters": {
+        "numberInputs": 5
+      },
+      "id": "c71268bc-2af7-44d2-bb0e-689031a0fbb2",
+      "name": "Merge All Analytics",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2112,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "field": "id"
+            }
+          ]
+        },
+        "options": {
+          "outputFormat": "singleItem"
+        }
+      },
+      "id": "02947b36-cbea-44ff-b509-769ac4f1c419",
+      "name": "Calculate Total Count",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        1888,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "field": "id"
+            }
+          ]
+        },
+        "options": {
+          "outputFormat": "separateItems"
+        }
+      },
+      "id": "34655930-1dbe-4397-8672-be574036df3c",
+      "name": "Calculate Sentiment Distribution",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        1888,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "field": "id"
+            },
+            {
+              "aggregation": "average",
+              "field": "confidence"
+            },
+            {
+              "aggregation": "average",
+              "field": "resolution_time_seconds"
+            }
+          ]
+        },
+        "options": {
+          "outputFormat": "separateItems"
+        }
+      },
+      "id": "4e15e055-a69f-40ff-8738-231fc467844a",
+      "name": "Calculate Resolution Metrics",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        1888,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Group interactions by week and category\nconst items = $input.all().map(i => i.json);\n\n// Helper to get week number\nfunction getWeekNumber(date) {\n  const d = new Date(date);\n  d.setHours(0, 0, 0, 0);\n  d.setDate(d.getDate() + 4 - (d.getDay() || 7));\n  const yearStart = new Date(d.getFullYear(), 0, 1);\n  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);\n  return `${d.getFullYear()}-W${weekNo.toString().padStart(2, '0')}`;\n}\n\nconst weeklyData = {};\n\nitems.forEach(item => {\n  const week = getWeekNumber(item.timestamp);\n  const category = item.category;\n  \n  if (!weeklyData[week]) {\n    weeklyData[week] = {};\n  }\n  \n  if (!weeklyData[week][category]) {\n    weeklyData[week][category] = 0;\n  }\n  \n  weeklyData[week][category]++;\n});\n\n// Convert to array format\nconst result = [];\nfor (const week in weeklyData) {\n  for (const category in weeklyData[week]) {\n    result.push({\n      week: week,\n      category: category,\n      count: weeklyData[week][category]\n    });\n  }\n}\n\n// Sort by week and category\nresult.sort((a, b) => {\n  if (a.week !== b.week) return a.week.localeCompare(b.week);\n  return a.category.localeCompare(b.category);\n});\n\nreturn result.map(item => ({ json: item }));"
+      },
+      "id": "a65cc06d-29f1-438f-a3ba-799040a5d36a",
+      "name": "Calculate Weekly Trends",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process all analytics data into dashboard structure\nconst allData = $input.all().map(i => i.json);\n\n// Separate data by type\nconst categoryData = allData.filter(d => d.category && d.id_count);\nconst totalData = allData.find(d => d.id_count && !d.category && !d.sentiment && !d.resolution_path);\nconst sentimentData = allData.filter(d => d.sentiment && d.id_count);\nconst resolutionData = allData.filter(d => d.resolution_path && d.id_count);\nconst weeklyData = allData.filter(d => d.week && d.category && d.count);\n\nconst totalCount = totalData ? totalData.id_count : 500;\n\n// Calculate percentages for category distribution\nconst categoryDistribution = categoryData.map(item => ({\n  category: item.category,\n  count: item.id_count,\n  percentage: ((item.id_count / totalCount) * 100).toFixed(1)\n})).sort((a, b) => b.count - a.count);\n\n// Calculate sentiment breakdown\nconst sentimentBreakdown = sentimentData.map(item => ({\n  sentiment: item.sentiment,\n  count: item.id_count,\n  percentage: ((item.id_count / totalCount) * 100).toFixed(1)\n}));\n\n// Calculate resolution path metrics\nconst resolutionMetrics = resolutionData.map(item => ({\n  path: item.resolution_path,\n  path_name: item.resolution_path === 'A' ? 'Auto Resolution' : item.resolution_path === 'B' ? 'Knowledge Base' : 'Human Escalation',\n  count: item.id_count,\n  percentage: ((item.id_count / totalCount) * 100).toFixed(1),\n  avg_confidence: item.confidence_average ? item.confidence_average.toFixed(2) : 'N/A',\n  avg_resolution_time: item.resolution_time_seconds_average ? Math.round(item.resolution_time_seconds_average) : 'N/A'\n}));\n\n// Group weekly trends by week\nconst weeklyTrends = {};\nweeklyData.forEach(item => {\n  if (!weeklyTrends[item.week]) {\n    weeklyTrends[item.week] = { week: item.week, categories: {} };\n  }\n  weeklyTrends[item.week].categories[item.category] = item.count;\n});\n\nconst weeklyTrendsArray = Object.values(weeklyTrends);\n\n// Calculate automation opportunities\nconst autoResolved = resolutionData.find(d => d.resolution_path === 'A');\nconst knowledgeBase = resolutionData.find(d => d.resolution_path === 'B');\nconst humanEscalation = resolutionData.find(d => d.resolution_path === 'C');\n\nconst automationRate = autoResolved && knowledgeBase ? \n  (((autoResolved.id_count + knowledgeBase.id_count) / totalCount) * 100).toFixed(1) : '0';\n\nconst dashboard = {\n  metadata: {\n    title: 'BeastBot Customer Care Analytics Dashboard',\n    generated_at: new Date().toISOString(),\n    total_interactions: totalCount,\n    date_range: 'Last 30 days'\n  },\n  problem_distribution: {\n    title: 'Problem Distribution',\n    categories: categoryDistribution\n  },\n  sentiment_analysis: {\n    title: 'Customer Sentiment Breakdown',\n    sentiments: sentimentBreakdown\n  },\n  resolution_performance: {\n    title: 'Resolution Path Performance',\n    paths: resolutionMetrics\n  },\n  weekly_trends: {\n    title: 'Weekly Trends',\n    data: weeklyTrendsArray\n  },\n  automation_insights: {\n    title: 'Automation Opportunities',\n    automation_rate: automationRate + '%',\n    auto_resolved_count: autoResolved ? autoResolved.id_count : 0,\n    knowledge_base_count: knowledgeBase ? knowledgeBase.id_count : 0,\n    human_escalation_count: humanEscalation ? humanEscalation.id_count : 0,\n    recommendations: [\n      {\n        area: 'Order Tracking',\n        current_automation: 'High',\n        opportunity: 'Implement proactive order status notifications to reduce incoming queries by 30%',\n        impact: 'High'\n      },\n      {\n        area: 'Delivery Delays',\n        current_automation: 'Medium',\n        opportunity: 'Auto-detect delays and send preemptive updates with compensation offers',\n        impact: 'High'\n      },\n      {\n        area: 'Product Questions',\n        current_automation: 'High',\n        opportunity: 'Expand knowledge base with video tutorials and comparison charts',\n        impact: 'Medium'\n      },\n      {\n        area: 'Refund Requests',\n        current_automation: 'Low',\n        opportunity: 'Enable AI to auto-approve refunds under ₹500 based on order history',\n        impact: 'High'\n      }\n    ]\n  },\n  tools_and_workflow: {\n    ai_tools: [\n      'Groq (llama3-8b-8192) - Fast LLM inference for real-time classification',\n      'Structured Output Parser - Ensures consistent JSON responses',\n      'LangChain Agent - Orchestrates AI decision-making pipeline'\n    ],\n    automation_platform: 'n8n - Open-source workflow automation',\n    data_storage: 'n8n Data Tables - Persistent storage for interaction logs',\n    architecture: [\n      '1. Chat Trigger → Receives customer query',\n      '2. AI Classifier → Analyzes query, extracts entities, determines sentiment',\n      '3. Switch Router → Routes to Auto/Knowledge/Escalation path',\n      '4. Data Logger → Stores all interactions for analytics',\n      '5. Response Handler → Sends appropriate reply to customer',\n      '6. Analytics Engine → Aggregates data for dashboard insights'\n    ],\n    scalability: {\n      current_capacity: '500-1000 queries/day',\n      scaling_strategy: [\n        'Batch processing for high-volume periods',\n        'Caching common responses to reduce AI calls',\n        'Load balancing across multiple workflow instances',\n        'Database indexing on category and timestamp fields'\n      ]\n    }\n  }\n};\n\nreturn [{ json: dashboard }];"
+      },
+      "id": "18e54f3a-14eb-4485-88e1-9079031e01d3",
+      "name": "Build Dashboard Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2336,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>{{ $json.metadata.title }}</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; color: #333; }\n        .container { max-width: 1400px; margin: 0 auto; }\n        .header { background: white; padding: 30px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }\n        .header h1 { color: #667eea; font-size: 32px; margin-bottom: 10px; }\n        .header .meta { color: #666; font-size: 14px; }\n        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }\n        .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }\n        .stat-card h3 { color: #667eea; font-size: 16px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }\n        .stat-value { font-size: 36px; font-weight: bold; color: #333; margin-bottom: 5px; }\n        .stat-label { color: #666; font-size: 14px; }\n        .section { background: white; padding: 30px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }\n        .section h2 { color: #667eea; font-size: 24px; margin-bottom: 20px; border-bottom: 3px solid #667eea; padding-bottom: 10px; }\n        table { width: 100%; border-collapse: collapse; margin-top: 15px; }\n        th { background: #f8f9fa; padding: 12px; text-align: left; font-weight: 600; color: #667eea; border-bottom: 2px solid #667eea; }\n        td { padding: 12px; border-bottom: 1px solid #e9ecef; }\n        tr:hover { background: #f8f9fa; }\n        .progress-bar { background: #e9ecef; height: 24px; border-radius: 12px; overflow: hidden; margin-top: 8px; }\n        .progress-fill { background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); height: 100%; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; color: white; font-size: 12px; font-weight: bold; transition: width 0.3s ease; }\n        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }\n        .badge-high { background: #d4edda; color: #155724; }\n        .badge-medium { background: #fff3cd; color: #856404; }\n        .badge-low { background: #f8d7da; color: #721c24; }\n        .recommendation { background: #f8f9fa; padding: 15px; border-left: 4px solid #667eea; margin-bottom: 15px; border-radius: 4px; }\n        .recommendation h4 { color: #667eea; margin-bottom: 8px; }\n        .recommendation p { color: #666; font-size: 14px; line-height: 1.6; }\n        .tool-list { list-style: none; }\n        .tool-list li { padding: 10px 0; border-bottom: 1px solid #e9ecef; color: #666; }\n        .tool-list li:before { content: \"✓ \"; color: #667eea; font-weight: bold; margin-right: 8px; }\n        .architecture-step { background: #f8f9fa; padding: 12px 15px; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid #667eea; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>🤖 {{ $json.metadata.title }}</h1>\n            <div class=\"meta\">Generated: {{ $json.metadata.generated_at }} | Period: {{ $json.metadata.date_range }}</div>\n        </div>\n\n        <div class=\"stats-grid\">\n            <div class=\"stat-card\">\n                <h3>Total Interactions</h3>\n                <div class=\"stat-value\">{{ $json.metadata.total_interactions }}</div>\n                <div class=\"stat-label\">Last 30 days</div>\n            </div>\n            <div class=\"stat-card\">\n                <h3>Automation Rate</h3>\n                <div class=\"stat-value\">{{ $json.automation_insights.automation_rate }}</div>\n                <div class=\"stat-label\">AI-resolved queries</div>\n            </div>\n            <div class=\"stat-card\">\n                <h3>Auto Resolved</h3>\n                <div class=\"stat-value\">{{ $json.automation_insights.auto_resolved_count }}</div>\n                <div class=\"stat-label\">Instant responses</div>\n            </div>\n            <div class=\"stat-card\">\n                <h3>Human Escalations</h3>\n                <div class=\"stat-value\">{{ $json.automation_insights.human_escalation_count }}</div>\n                <div class=\"stat-label\">Complex cases</div>\n            </div>\n        </div>\n\n        <div class=\"section\">\n            <h2>📊 {{ $json.problem_distribution.title }}</h2>\n            <table>\n                <thead>\n                    <tr>\n                        <th>Issue Type</th>\n                        <th>Count</th>\n                        <th>% of Queries</th>\n                        <th>Distribution</th>\n                    </tr>\n                </thead>\n                <tbody>\n                    {{ $json.problem_distribution.categories.map(cat => `\n                    <tr>\n                        <td><strong>${cat.category.replace(/_/g, \" \").replace(/\\b\\w/g, l => l.toUpperCase())}</strong></td>\n                        <td>${cat.count}</td>\n                        <td><strong>${cat.percentage}%</strong></td>\n                        <td>\n                            <div class=\"progress-bar\">\n                                <div class=\"progress-fill\" style=\"width: ${cat.percentage}%\">${cat.percentage}%</div>\n                            </div>\n                        </td>\n                    </tr>\n                    `).join(\"\") }}\n                </tbody>\n            </table>\n        </div>\n\n        <div class=\"section\">\n            <h2>😊 {{ $json.sentiment_analysis.title }}</h2>\n            <table>\n                <thead>\n                    <tr>\n                        <th>Sentiment</th>\n                        <th>Count</th>\n                        <th>Percentage</th>\n                    </tr>\n                </thead>\n                <tbody>\n                    {{ $json.sentiment_analysis.sentiments.map(sent => `\n                    <tr>\n                        <td><strong>${sent.sentiment.charAt(0).toUpperCase() + sent.sentiment.slice(1)}</strong></td>\n                        <td>${sent.count}</td>\n                        <td><strong>${sent.percentage}%</strong></td>\n                    </tr>\n                    `).join(\"\") }}\n                </tbody>\n            </table>\n        </div>\n\n        <div class=\"section\">\n            <h2>⚡ {{ $json.resolution_performance.title }}</h2>\n            <table>\n                <thead>\n                    <tr>\n                        <th>Resolution Path</th>\n                        <th>Count</th>\n                        <th>% of Total</th>\n                        <th>Avg Confidence</th>\n                        <th>Avg Time (sec)</th>\n                    </tr>\n                </thead>\n                <tbody>\n                    {{ $json.resolution_performance.paths.map(path => `\n                    <tr>\n                        <td><strong>${path.path_name}</strong></td>\n                        <td>${path.count}</td>\n                        <td><strong>${path.percentage}%</strong></td>\n                        <td>${path.avg_confidence}</td>\n                        <td>${path.avg_resolution_time}</td>\n                    </tr>\n                    `).join(\"\") }}\n                </tbody>\n            </table>\n        </div>\n\n        <div class=\"section\">\n            <h2>🚀 {{ $json.automation_insights.title }}</h2>\n            {{ $json.automation_insights.recommendations.map(rec => `\n            <div class=\"recommendation\">\n                <h4>${rec.area} <span class=\"badge badge-${rec.impact.toLowerCase()}\">${rec.impact} Impact</span></h4>\n                <p><strong>Current:</strong> ${rec.current_automation} automation</p>\n                <p><strong>Opportunity:</strong> ${rec.opportunity}</p>\n            </div>\n            `).join(\"\") }}\n        </div>\n\n        <div class=\"section\">\n            <h2>🛠️ Tools & Workflow Architecture</h2>\n            <h3 style=\"color: #667eea; margin-top: 20px; margin-bottom: 10px;\">AI Tools Used</h3>\n            <ul class=\"tool-list\">\n                {{ $json.tools_and_workflow.ai_tools.map(tool => `<li>${tool}</li>`).join(\"\") }}\n            </ul>\n\n            <h3 style=\"color: #667eea; margin-top: 20px; margin-bottom: 10px;\">Platform & Storage</h3>\n            <ul class=\"tool-list\">\n                <li>{{ $json.tools_and_workflow.automation_platform }}</li>\n                <li>{{ $json.tools_and_workflow.data_storage }}</li>\n            </ul>\n\n            <h3 style=\"color: #667eea; margin-top: 20px; margin-bottom: 10px;\">Workflow Architecture</h3>\n            {{ $json.tools_and_workflow.architecture.map(step => `\n            <div class=\"architecture-step\">${step}</div>\n            `).join(\"\") }}\n\n            <h3 style=\"color: #667eea; margin-top: 20px; margin-bottom: 10px;\">Scalability Strategy</h3>\n            <p style=\"margin-bottom: 10px;\"><strong>Current Capacity:</strong> {{ $json.tools_and_workflow.scalability.current_capacity }}</p>\n            <ul class=\"tool-list\">\n                {{ $json.tools_and_workflow.scalability.scaling_strategy.map(strategy => `<li>${strategy}</li>`).join(\"\") }}\n            </ul>\n        </div>\n    </div>\n</body>\n</html>"
+      },
+      "id": "85cec309-66d8-4c6b-bf37-254b63ac79c0",
+      "name": "Generate HTML Dashboard",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        2560,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "a987135e-4681-4e98-ad26-d1c780d01111",
+      "name": "Respond with Dashboard",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2784,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ \"chat_context_\" + $json.sessionId }}",
+        "value": "={{ JSON.stringify({ messages: [$json.chatInput], timestamp: $now.toISO() }) }}",
+        "expire": true,
+        "ttl": 3600
+      },
+      "id": "5264e16c-894e-47a2-b102-33fbc1afd6ef",
+      "name": "Store Context",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "context",
+        "key": "={{ \"chat_context_\" + $json.sessionId }}",
+        "keyType": "string",
+        "options": {}
+      },
+      "id": "7ed0516e-b772-47c2-9ade-664d957426b7",
+      "name": "Retrieve Context",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        16,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Extract ALL intents from the customer query. Return a JSON array of intents.\n\nExamples:\n\"Payment failed and order delayed\" → [{\"intent\": \"payment_failure\"}, {\"intent\": \"delivery_delay\"}]\n\"Want refund\" → [{\"intent\": \"refund_request\"}]\n\nCategories: order_tracking, delivery_delay, refund_request, product_complaint, subscription_issue, payment_failure, general_question"
+        }
+      },
+      "id": "ed77d1f6-bb1d-4122-84a1-483966dd8fbb",
+      "name": "Extract Intents",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        240,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": {
+          "intents": [
+            {
+              "intent": "order_tracking",
+              "entities": {}
+            }
+          ]
+        }
+      },
+      "id": "9ae85745-c732-4335-9520-901d1dca231a",
+      "name": "Intent Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        320,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.intents",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "8f18eb76-9e51-451d-be08-23d6fc4a9dcf",
+      "name": "Split Intents",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        592,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "f275b610-5ccf-40ea-b00f-ffedbd2443bd",
+      "name": "Check Confidence",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1280,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "finalResponse",
+              "value": "={{ \"I want to help you better. Could you please provide more details about: \" + $json.output.category + \"?\" }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "needs_clarification",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "eb410213-a859-4d91-a490-3db9682c8069",
+      "name": "Ask Clarification",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1504,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "68d49277-f47f-4b77-bd4a-5d2b0677a355",
+      "name": "Check Critical Sentiment",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "finalResponse",
+              "value": "This is urgent. Our senior support team has been notified and will contact you immediately.",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "priority",
+              "value": "critical",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "escalated",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "dd26d625-dd66-44b7-a00e-7ca232d83c49",
+      "name": "Immediate Escalation",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1728,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.output.category === \"order_tracking\" ? \"https://api.beastlife.com/orders/\" + $json.output.entities.order_id : $json.output.category === \"payment_failure\" ? \"https://api.razorpay.com/v1/payments/\" + $json.output.entities.payment_id : \"https://api.beastlife.com/generic\" }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"action\": $json.output.category, \"data\": $json.output.entities } }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 0
+            }
+          },
+          "timeout": 10000
+        }
+      },
+      "id": "154b8411-bc93-404b-945c-d9870b7b7ccb",
+      "name": "Call API With Retry",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2176,
+        544
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "837efb05-4110-497b-b7ef-430c3d70dd6f",
+      "name": "Retry Logic",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2400,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "c0ff96ed-46eb-427b-a87e-03af1bca686e",
+      "name": "Retry API Call",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2624,
+        544
+      ],
+      "webhookId": "36b4564f-2e3c-498a-adce-665f300b8178"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "beastbot-escalations"
+        },
+        "messageType": "block",
+        "blocksUi": "={{ JSON.stringify([{\"type\": \"header\", \"text\": {\"type\": \"plain_text\", \"text\": \"🚨 Customer Escalation - \" + $json.output.urgency.toUpperCase()}}, {\"type\": \"section\", \"fields\": [{\"type\": \"mrkdwn\", \"text\": \"*Category:*\\n\" + $json.output.category}, {\"type\": \"mrkdwn\", \"text\": \"*Sentiment:*\\n\" + $json.output.sentiment}, {\"type\": \"mrkdwn\", \"text\": \"*Confidence:*\\n\" + $json.output.confidence}, {\"type\": \"mrkdwn\", \"text\": \"*Order ID:*\\n\" + ($json.output.entities?.order_id ?? \"N/A\")}]}, {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Query:*\\n\" + $json.chatInput}}]) }}",
+        "text": "={{ \"🚨 ESCALATION ALERT\" }}",
+        "otherOptions": {}
+      },
+      "id": "f8b1d3b8-a3e7-4673-88c3-9f9789212f22",
+      "name": "Send Escalation Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        2176,
+        944
+      ],
+      "webhookId": "939a30ff-6575-4827-b336-c7fb2c0cdfdc"
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "How was your experience with BeastBot?",
+        "formDescription": "Please rate your experience",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Rating",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "5 - Excellent"
+                  },
+                  {
+                    "option": "4 - Good"
+                  },
+                  {
+                    "option": "3 - Average"
+                  },
+                  {
+                    "option": "2 - Poor"
+                  },
+                  {
+                    "option": "1 - Very Poor"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Additional Comments",
+              "fieldType": "textarea",
+              "placeholder": "Tell us more..."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ff9c8641-6827-4246-89a5-bfd1deac5136",
+      "name": "Collect Feedback",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2624,
+        944
+      ],
+      "webhookId": "f09aa5c1-1066-4449-a7b8-7d50cec793aa"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "beastbot_feedback"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "rating": "={{ $json.rating }}",
+            "feedback": "={{ $json.feedback }}",
+            "category": "={{ $json.category }}",
+            "session_id": "={{ $json.sessionId }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "bb3bf005-215e-4100-9f08-f08f9208ed2e",
+      "name": "Store Feedback",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2848,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "output",
+              "renameField": true,
+              "outputFieldName": "all_responses"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "24bfb1ab-4d7d-4080-982d-72d1ea86a022",
+      "name": "Aggregate Intents",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        944,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge multiple intent responses into one coherent message\nconst responses = $input.all().map(i => i.json);\n\nif (responses.length === 1) {\n  return [{ json: responses[0] }];\n}\n\nconst finalResponse = responses.map((r, idx) => \n  `${idx + 1}. ${r.output?.response ?? r.finalResponse ?? \"Processed\"}`\n).join(\"\\n\\n\");\n\nconst categories = responses.map(r => r.output?.category ?? r.category).filter(Boolean);\n\nreturn [{\n  json: {\n    finalResponse: `I've addressed multiple concerns:\\n\\n${finalResponse}`,\n    categories: categories,\n    multi_intent: true\n  }\n}];"
+      },
+      "id": "16a6f3cb-8bfc-46e7-829e-12735e8827bb",
+      "name": "Merge Intent Responses",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Detect spikes in category counts\nconst items = $input.all().map(i => i.json);\nconst categoryData = items.filter(d => d.category && d.id_count);\n\nconst alerts = [];\nconst THRESHOLD = 50; // Alert if category > 50 queries\n\ncategoryData.forEach(cat => {\n  if (cat.id_count > THRESHOLD) {\n    alerts.push({\n      alert_type: \"spike_detected\",\n      category: cat.category,\n      count: cat.id_count,\n      threshold: THRESHOLD,\n      severity: cat.id_count > 100 ? \"critical\" : \"warning\",\n      message: `⚠️ Spike detected: ${cat.category} has ${cat.id_count} queries (threshold: ${THRESHOLD})`\n    });\n  }\n});\n\nreturn alerts.length > 0 ? alerts.map(a => ({ json: a })) : [{ json: { alert_type: \"no_spike\", message: \"All categories within normal range\" } }];"
+      },
+      "id": "73357dce-8673-44da-9758-fa0bf42bf93b",
+      "name": "Detect Spike",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ac0ac22a-16b4-4ddb-9f98-449625422fb7",
+      "name": "Filter Spike Alerts",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "beastbot-ops"
+        },
+        "text": "={{ $json.message + \"\\n\\nCategory: \" + $json.category + \"\\nCount: \" + $json.count + \"\\nSeverity: \" + $json.severity }}",
+        "otherOptions": {}
+      },
+      "id": "1948f4dd-f23b-4ddf-9e72-42a628acae36",
+      "name": "Send Spike Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1104,
+        -224
+      ],
+      "webhookId": "fe109c54-6982-4033-80d9-47e0b20700b1"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "5b826a98-2ddb-4f31-98a1-fcdd2f89de0f",
+      "name": "Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        944,
+        672
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "BeastBot Chat": {
+      "main": [
+        [
+          {
+            "node": "Store Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BeastBot Classifier": {
+      "main": [
+        [
+          {
+            "node": "Check Confidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "BeastBot Classifier",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Path": {
+      "main": [
+        [
+          {
+            "node": "Log Interaction",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Interaction",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Interaction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "BeastBot Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Extract Intents",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger - Generate Dataset": {
+      "main": [
+        [
+          {
+            "node": "Generate Sample Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Sample Dataset": {
+      "main": [
+        [
+          {
+            "node": "Create Data Table",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Batch Insert Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Complete": {
+      "main": [
+        [
+          {
+            "node": "Calculate Statistics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert to Data Table": {
+      "main": [
+        [
+          {
+            "node": "Batch Insert Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Insert Loop": {
+      "main": [
+        [
+          {
+            "node": "Batch Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert to Data Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Statistics": {
+      "main": [
+        [
+          {
+            "node": "Aggregate by Category",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Aggregate by Sentiment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate by Category": {
+      "main": [
+        [
+          {
+            "node": "Combine Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Analytics": {
+      "main": [
+        [
+          {
+            "node": "Format Final Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate by Sentiment": {
+      "main": [
+        [
+          {
+            "node": "Combine Analytics",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Schedule Daily Report": {
+      "main": [
+        [
+          {
+            "node": "Fetch Daily Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Daily Data": {
+      "main": [
+        [
+          {
+            "node": "Filter Escalations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Escalations": {
+      "main": [
+        [
+          {
+            "node": "Daily Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Interaction": {
+      "main": [
+        [
+          {
+            "node": "Knowledge Base Response",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Call API With Retry",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Escalation Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch All Interactions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch All Interactions": {
+      "main": [
+        [
+          {
+            "node": "Calculate Category Distribution",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Calculate Total Count",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Calculate Sentiment Distribution",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Calculate Resolution Metrics",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Calculate Weekly Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Category Distribution": {
+      "main": [
+        [
+          {
+            "node": "Merge All Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Analytics": {
+      "main": [
+        [
+          {
+            "node": "Build Dashboard Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Total Count": {
+      "main": [
+        [
+          {
+            "node": "Merge All Analytics",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Calculate Sentiment Distribution": {
+      "main": [
+        [
+          {
+            "node": "Merge All Analytics",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Calculate Resolution Metrics": {
+      "main": [
+        [
+          {
+            "node": "Merge All Analytics",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Calculate Weekly Trends": {
+      "main": [
+        [
+          {
+            "node": "Merge All Analytics",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Build Dashboard Data": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML Dashboard": {
+      "main": [
+        [
+          {
+            "node": "Respond with Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Context": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Context": {
+      "main": [
+        [
+          {
+            "node": "Extract Intents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Intents": {
+      "main": [
+        [
+          {
+            "node": "Split Intents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extract Intents",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Intents": {
+      "main": [
+        [
+          {
+            "node": "BeastBot Classifier",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Aggregate Intents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Confidence": {
+      "main": [
+        [
+          {
+            "node": "Ask Clarification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Critical Sentiment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Critical Sentiment": {
+      "main": [
+        [
+          {
+            "node": "Immediate Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route by Path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call API With Retry": {
+      "main": [
+        [
+          {
+            "node": "Retry Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Logic": {
+      "main": [
+        [
+          {
+            "node": "Retry API Call",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Auto Resolution Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry API Call": {
+      "main": [
+        [
+          {
+            "node": "Call API With Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Escalation Alert": {
+      "main": [
+        [
+          {
+            "node": "Escalation Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation Response": {
+      "main": [
+        [
+          {
+            "node": "Collect Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Feedback": {
+      "main": [
+        [
+          {
+            "node": "Store Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Intents": {
+      "main": [
+        [
+          {
+            "node": "Merge Intent Responses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Spike": {
+      "main": [
+        [
+          {
+            "node": "Filter Spike Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Spike Alerts": {
+      "main": [
+        [
+          {
+            "node": "Send Spike Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "BeastBot Classifier",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "8a8ebb89-677e-4819-9f9c-4e171b1219b7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d55e264d29d4fe3f17374b99c21b071b809bc929a6a5dec67481ac3443928ad7"
+  },
+  "id": "3tiNBcEEAMtPdKJg",
+  "tags": []
+}
