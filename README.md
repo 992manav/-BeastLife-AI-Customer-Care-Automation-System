@@ -22,6 +22,7 @@ This system directly addresses all requirements of the Beastlife AI Challenge:
 | **Scale with higher volume**        | Async/horizontal scaling for 1000+ concurrent queries                           | ✅     |
 
 **📋 See [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md) for complete requirement verification.**
+<img width="1860" height="964" alt="image" src="https://github.com/user-attachments/assets/d818dfc7-0bd5-48f3-a2e2-5a5dc736a2db" />
 
 ---
 <img width="1808" height="1024" alt="670f077c-a208-4f59-89a9-b2e547e45ade" src="https://github.com/user-attachments/assets/15ec31bd-a5e0-4af5-b2d0-9ee645250e7b" />
